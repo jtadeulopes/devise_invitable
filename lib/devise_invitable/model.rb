@@ -26,6 +26,8 @@ module Devise
       included do
         include ::DeviseInvitable::Inviter
         belongs_to :invited_by, :polymorphic => true
+        has_many :invitations, :class_name => self.to_s, :foreign_key => "invited_by_id"
+        after_destroy :increment_invitation_limit
       end
 
       # Accept an invitation by clearing invitation token and confirming it if model
@@ -111,6 +113,13 @@ module Devise
         # this token is being generated
         def generate_invitation_token
           self.invitation_token   = self.class.invitation_token
+        end
+
+        # Increment invitation_limit when user invited is deleted
+        def increment_invitation_limit
+          if invited_by.present?
+            invited_by.update_attribute(:invitation_limit, invited_by.invitation_limit + 1)
+          end
         end
 
       module ClassMethods

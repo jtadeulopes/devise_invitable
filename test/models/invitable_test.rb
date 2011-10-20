@@ -317,4 +317,23 @@ class InvitableTest < ActiveSupport::TestCase
     end
   end
 
+  test 'should has many invitations' do
+    user = new_user
+    invited_user = User.invite!({:email => "valid@email.com"}, user)
+    assert user.invitations.include?(invited_user)
+  end
+
+  test 'should increment invitation_limit when invited user is deleted' do
+    User.stubs(:invitation_limit).returns(2)
+
+    user = new_user
+    invited_user = User.invite!({:email => "valid@email.com"}, user)
+    assert_equal 1, user.invitation_limit
+
+    invited_user.destroy
+    user.reload
+
+    assert_equal 2, user.invitation_limit
+  end
+
 end
